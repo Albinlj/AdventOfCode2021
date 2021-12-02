@@ -16,14 +16,6 @@ export const parseCommand = (str: string) => {
   return [command, parseInt(direction)] as Command;
 };
 
-test("parse", () => {
-  expect(pipe(["forward 5", "down 8", "up 2"], map(parseCommand))).toEqual([
-    ["forward", 5],
-    ["down", 8],
-    ["up", 2],
-  ]);
-});
-
 //part 1
 type Depth = number;
 type Horizontal = number;
@@ -40,12 +32,41 @@ const executeCommands = (commands: Command[]) =>
     [0, 0] as Position
   );
 
-const part1 = (input: string[]) => {
+export const doStuff = (input: string[], executeCommands) => {
   const [depth, horizontal] = pipe(input, map(parseCommand), executeCommands);
   return depth * horizontal;
 };
 
+//part2
+type Aim = number;
+type PositionAndAim = [...Position, Aim];
+
+const executeCommands2 = (commands: Command[]) =>
+  commands.reduce(
+    ([depth, horizontal, aim], [direction, length]) =>
+      match(direction)
+        .with("down", () => [depth, horizontal, aim + length])
+        .with("up", () => [depth, horizontal, aim - length])
+        .with("forward", () => [depth + aim * length, horizontal + length, aim])
+        .exhaustive(),
+    [0, 0, 0] as PositionAndAim
+  );
+
+//tests
 test("part1", () => {
-  expect(part1(example)).toEqual(150);
-  expect(part1(input)).toEqual(2150351);
+  expect(doStuff(example, executeCommands)).toEqual(150);
+  expect(doStuff(input, executeCommands)).toEqual(2150351);
+});
+
+test("part2", () => {
+  expect(doStuff(example, executeCommands2)).toEqual(900);
+  expect(doStuff(input, executeCommands2)).toEqual(1842742223);
+});
+
+test("parse", () => {
+  expect(pipe(["forward 5", "down 8", "up 2"], map(parseCommand))).toEqual([
+    ["forward", 5],
+    ["down", 8],
+    ["up", 2],
+  ]);
 });
