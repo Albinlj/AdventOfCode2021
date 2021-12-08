@@ -1,4 +1,4 @@
-import { toBitString } from "./../utils/bitStrings";
+import { binaryString } from "./../utils/bitStrings";
 import { getExample } from "../utils/getInput";
 import { getInput } from "../utils/getInput";
 import { span } from "../utils/span";
@@ -85,6 +85,6 @@ test("part 2", () => {
 });
 
 test("flips", () => {
-  expect(toBitString(22)).toEqual("10110");
+  expect(binaryString(22)).toEqual("10110");
   expect(flipBits(22)).toEqual(9);
 });
