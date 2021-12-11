@@ -108,7 +108,7 @@ test("findBasinSize", () => {
 
 test("part2", () => {
   expect(part2(example)).toEqual(1134);
-  expect(part2(input)).toEqual(1019494);
+  expect(part2(input)).toEqual(1417248);
 });
 
 function logBasins(grid: number[][], basins: Coord[][]) {
