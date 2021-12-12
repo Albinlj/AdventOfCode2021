@@ -8,6 +8,7 @@ import {
   reduceBy,
   reverse,
   split,
+  toUpper,
 } from "ramda";
 import { getInput, getExample } from "../utils/getInput";
 
@@ -25,12 +26,16 @@ const parseCaveSystem = pipe(
   Object.entries,
   map(([name, exits]) => ({
     name,
-    size: name === name.toUpperCase() ? "large" : "small",
+    size: name === toUpper(name) ? "large" : "small",
     exits,
   }))
 );
 
-const findPaths = () => [];
+const findPaths = (system: Cave[], current = "start", path: string[] = []) => {
+
+return current === "end" ? [...path, "end"] : 
+
+};
 
 const part1 = pipe(parseCaveSystem, findPaths, length);
 
