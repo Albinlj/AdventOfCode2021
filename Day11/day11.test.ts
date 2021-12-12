@@ -111,5 +111,5 @@ test("part1", () => {
 
 test("part2", () => {
   expect(part2(parseGrid(example))).toEqual(195);
-  expect(part2(parseGrid(input))).toEqual(195);
+  expect(part2(parseGrid(input))).toEqual(348);
 });

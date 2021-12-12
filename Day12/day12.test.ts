@@ -1,7 +1,9 @@
 import {
   chain,
-  groupBy,
-  length,
+  concat,
+  countBy,
+  equals,
+  identity,
   map,
   nth,
   pipe,
@@ -14,40 +16,99 @@ import { getInput, getExample } from "../utils/getInput";
 
 const input = getInput(__dirname);
 const example = getExample(__dirname);
+const example2 =
+  "dc-end\nHN-start\nstart-kj\ndc-start\ndc-HN\nLN-dc\nHN-end\nkj-sa\nkj-HN\nkj-dc";
 
-type Size = "large" | "small";
-type Cave = { name: string; size: Size; exits: string[] };
+type System = { [from: string]: string[] };
 
-const parseCaveSystem = pipe(
+const parseCaveSystem: (str: string) => System = pipe(
   split("\n"),
   map(split("-")),
-  chain((arr) => [arr, reverse(arr)]),
-  reduceBy((exits, [_, exit]) => exits.concat(exit), [], nth(0)),
-  Object.entries,
-  map(([name, exits]) => ({
-    name,
-    size: name === toUpper(name) ? "large" : "small",
-    exits,
-  }))
+  chain((path) => [path, reverse(path)]),
+  reduceBy((exits, [_, exit]) => exits.concat(exit), [], nth(0))
 );
 
-const findPaths = (system: Cave[], current = "start", path: string[] = []) => {
+const part1 = (input: string) => {
+  const system = parseCaveSystem(input);
+  let fullPaths = [];
 
-return current === "end" ? [...path, "end"] : 
-
+  const findPaths = (current = "start", path: string[] = []) => {
+    return current === "end"
+      ? (() => {
+          fullPaths.push(path);
+          return [...path, "end"];
+        })()
+      : system[current]
+          .filter((e) => !path.includes(e) || isLarge(e))
+          .reduce(
+            (paths, next) => concat(paths, findPaths(next, [...path, current])),
+            []
+          );
+  };
+  findPaths("start");
+  return fullPaths.length;
 };
 
-const part1 = pipe(parseCaveSystem, findPaths, length);
+//please don't look
+const part2 = (input: string) => {
+  const system = parseCaveSystem(input);
+  let fullPaths = [];
+
+  const findPaths = (current = "start", path: string[] = []) => {
+    if (current === "end") {
+      fullPaths.push([...path, "end"]);
+    } else {
+      system[current]
+        .filter(
+          (e) =>
+            e !== "start" &&
+            (isLarge(e) ||
+              !path.includes(e) ||
+              (() => {
+                const smallCaves = [...path, current].filter(
+                  (c) => !isLarge(c)
+                );
+                const counts = countBy(identity, smallCaves);
+                return Object.values(counts).every((v) => v < 2);
+              })())
+        )
+        .forEach((next) => findPaths(next, [...path, current]));
+    }
+  };
+
+  findPaths("start");
+  return fullPaths.length;
+};
+
+const isLarge = (name: string) => equals(name, toUpper(name));
 
 test("part1", () => {
-  expect(parseCaveSystem(example)).toEqual([
-    { exits: ["A", "b"], name: "start", size: "small" },
-    { exits: ["start", "c", "b", "end"], name: "A", size: "large" },
-    { exits: ["start", "A", "d", "end"], name: "b", size: "small" },
-    { exits: ["A"], name: "c", size: "small" },
-    { exits: ["b"], name: "d", size: "small" },
-    { exits: ["A", "b"], name: "end", size: "small" },
-  ]);
-  // expect(part1(example)).toEqual(1656);
-  // expect(part1(input)).toEqual(1647);
+  expect(isLarge("ABC")).toEqual(true);
+  expect(isLarge("abc")).toEqual(false);
+  expect(parseCaveSystem(example)).toEqual({
+    start: ["A", "b"],
+    A: ["start", "c", "b", "end"],
+    b: ["start", "A", "d", "end"],
+    c: ["A"],
+    d: ["b"],
+    end: ["A", "b"],
+  });
+  expect(parseCaveSystem(example2)).toEqual({
+    HN: ["start", "dc", "end", "kj"],
+    LN: ["dc"],
+    dc: ["end", "start", "HN", "LN", "kj"],
+    end: ["dc", "HN"],
+    kj: ["start", "sa", "HN", "dc"],
+    sa: ["kj"],
+    start: ["HN", "kj", "dc"],
+  });
+  expect(part1(example)).toEqual(10);
+  expect(part1(example2)).toEqual(19);
+  expect(part1(input)).toEqual(3292);
+});
+
+test("part2", () => {
+  expect(part2(example)).toEqual(36);
+  expect(part2(example2)).toEqual(103);
+  expect(part2(input)).toEqual(89592);
 });

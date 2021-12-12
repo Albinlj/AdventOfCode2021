@@ -1,4 +1,4 @@
-export const log = (x: any) => {
+export function log<T>(x: T) {
   console.log(x);
   return x;
-};
+}

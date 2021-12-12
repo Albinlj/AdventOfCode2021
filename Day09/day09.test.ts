@@ -88,9 +88,6 @@ const part2 = (input: string) => {
   const grid = parseGrid(input);
   const lowspots = findLowSpots(grid);
   const basinCoords = lowspots.map((l) => findBasinCoords(l.coord, grid));
-
-  logBasins(grid, basinCoords);
-
   return [...basinCoords]
     .map(size)
     .sort((a, b) => b - a)
