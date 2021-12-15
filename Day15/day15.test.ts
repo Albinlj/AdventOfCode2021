@@ -1,3 +1,4 @@
+import { range } from "fp-ts/lib/ReadonlyNonEmptyArray";
 import {
   curry,
   equals,
@@ -5,18 +6,20 @@ import {
   findLastIndex,
   insert,
   last,
+  mathMod,
   not,
+  splitEvery,
 } from "ramda";
-import { getInput, getExample } from "../utils/getInput";
+import { getInput, getExample, getTextFile } from "../utils/getInput";
 import { Coord } from "../utils/grid";
 
 const input = getInput(__dirname);
 const example = getExample(__dirname);
+const bigExample = getTextFile(__dirname, "bigexample.txt");
 
 type Node = {
   coord: Coord;
   risk: number;
-  // prev: Coord;
   total: number;
   neighbors: Coord[];
 };
@@ -25,8 +28,6 @@ const parse = (input: string) => {
   const width = input.indexOf("\n");
   const cleaned = input.replace(/\s/g, "");
   const height = cleaned.length / width;
-  console.log(width);
-  console.log(height);
 
   return Array.from(cleaned).map((risk, i) => {
     const x = i % width;
@@ -45,39 +46,50 @@ const parse = (input: string) => {
   });
 };
 
-const getNode = curry((nodes: Node[], x: number, y: number) => {
-  nodes.find(({ coord: [a, b] }) => a === x && b === y);
-});
-
 const part1 = (input: string, goal: Coord) => {
   const nodes = parse(input);
-  let prio = [nodes[0]];
-  const visited = [nodes[0].coord.join(",")];
+  const map = new Map(nodes.map((n) => [n.coord.join(","), n]));
+  const visited = new Set([nodes[0].coord.join(",")]);
 
-  const get = ([x, y]: Coord) =>
-    nodes.find(({ coord: [a, b] }) => a === x && b === y);
+  const get = (coord: Coord) => map.get(coord.join(","));
 
-  while (get(goal).total === Infinity) {
-    const { neighbors, total, coord } = prio.shift();
+  const last = get(goal);
+  let toCheck = [nodes[0]];
+  while (last.total === Infinity) {
+    const { neighbors, total } = get(toCheck.shift().coord);
 
-    for (let nc of neighbors.filter((n) => !visited.includes(n.join(",")))) {
+    for (let nc of neighbors.filter((n) => !visited.has(n.join(",")))) {
       const neighbor = get(nc);
       neighbor.total = total + neighbor.risk;
-      const index = findLastIndex((a) => a.total < neighbor.total, prio);
-      prio = insert(index + 1, neighbor, prio);
-      visited.push(nc.join(","));
+      const index = findLastIndex((a) => a.total < neighbor.total, toCheck);
+      toCheck = insert(index + 1, neighbor, toCheck);
+      visited.add(nc.join(","));
     }
   }
-
   return get(goal).total;
 };
 
+const up = (line: string, amount: number) =>
+  Array.from(line)
+    .map((ch) => ((parseInt(ch) + amount - 1) % 9) + 1)
+    .join("");
+
+const part2 = (input: string, goal: Coord) => {
+  const newInput = embiggenInput(input);
+  return part1(newInput, goal);
+};
+
 test("part1", () => {
-  // expect(part1(example, [9, 9])).toEqual(40);
-  expect(part1(input, [99, 99])).toEqual(40);
+  expect(part1(example, [9, 9])).toEqual(40);
+  expect(part1(input, [99, 99])).toEqual(508);
 });
 
-test("partse", () => {
+test("part2", () => {
+  expect(part2(example, [49, 49])).toEqual(315);
+  expect(part2(input, [499, 499])).toEqual(2872);
+});
+
+test("parsing", () => {
   expect(parse(example)[0]).toEqual({
     coord: [0, 0],
     neighbors: [
@@ -99,3 +111,22 @@ test("partse", () => {
     total: Infinity,
   });
 });
+const embiggenInput = (input: string) => {
+  const width = input.indexOf("\n");
+
+  const oneFifthOfNumbers = input
+    .split("\n")
+    .map((line) =>
+      range(0, 4)
+        .map((amount) => up(line, amount))
+        .join("")
+    )
+    .join("");
+
+  const allnumbers = range(0, 4)
+    .map((y) => up(oneFifthOfNumbers, y))
+    .join("");
+
+  const newInput = splitEvery(width + 1, allnumbers).join("\n");
+  return newInput;
+};
