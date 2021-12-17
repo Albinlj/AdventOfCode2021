@@ -33,29 +33,36 @@ type Packet = {
   version: number;
   type: number;
   value: number;
+  operator?: any;
+  subPackets?: Packet[];
 };
 const parsePacket = (binaryString: string): [Packet, string] => {
   const version = parseInt(binaryString.slice(0, 3), 2);
   const type = parseInt(binaryString.slice(3, 6), 2);
-  const rest = binaryString.slice(6);
+  const body = binaryString.slice(6);
   //0 bullshit
 
   if (type === 4) {
-    const splitted = splitEvery(5, rest);
+    const splitted = splitEvery(5, body);
     console.log(splitted);
     const c = splitted.slice(0, splitted.findIndex((b) => b[0] === "0") + 1);
 
     const bits = c.map((a) => tail(a)).join("");
-
     const sum = parseInt(bits, 2);
 
     console.log(c);
-    const rest2 = rest.slice(c.map(length).reduce(add));
+    const rest2 = body.slice(c.map(length).reduce(add));
     console.log(rest2);
     const rest3 = rest2.slice(rest2.indexOf("1"));
     return [{ version, type, value: sum }, rest3];
   } else {
-    return [{ version, type }];
+    console.log(body);
+    const lengthBitsAmount = body[0] === "1" ? 11 : 15;
+    const packetsCountBits = body.slice(1, lengthBitsAmount + 1);
+    const packetsCount = parseInt(packetsCountBits, 2);
+    return packetsCount as any;
+
+    return null;
   }
 };
 
@@ -85,5 +92,9 @@ test("parsing", () => {
     "11101110000000001101010000001100100000100011000001100000"
   );
 
+  expect(part1("8A004A801A8002F478")).toEqual(16);
+  expect(part1("620080001611562C8802118E34")).toEqual(23);
+  expect(part1("A0016C880162017C3686B18A3D4780")).toEqual(31);
   expect(part1(example)).toEqual(0);
+  expect(part1(input)).toEqual(0);
 });
