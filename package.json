@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "test": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-    "do": "yarn jest day22 --watch"
+    "do": "yarn jest day23 --watch --silent=false"
   },
   "dependencies": {
     "@types/jest": "^26.0.23",
